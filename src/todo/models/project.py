@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 @pydantic_dataclass
 class Project:
     id: str = Field(
-        default_factory=uuid.uuid4
+        default_factory=lambda: str(uuid.uuid4())
     )
     name: str = Field(
         ...,

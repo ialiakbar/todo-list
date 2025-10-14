@@ -67,9 +67,10 @@ class ToDoListManager:
             raise ValueError(f"Cannot add more than {settings.MAX_NUMBER_OF_TASKS} tasks to a project")
 
         task = Task(
+            project=project,
             title=title,
             description=description,
-            deadline=deadline
+            deadline=deadline,
         )
         project.add_task(task)
         self.tasks[task.id] = task

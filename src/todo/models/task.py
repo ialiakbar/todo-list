@@ -24,7 +24,7 @@ class TaskStatus(str, Enum):
 class Task:
     project: Project
     id: str = Field(
-        default_factory=uuid.uuid4
+        default_factory=lambda: str(uuid.uuid4())
     )
     title: str = Field(
         ...,
