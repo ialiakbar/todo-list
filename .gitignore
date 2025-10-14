@@ -1,0 +1,16 @@
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+
+# Env files
+.env
+
+# Poetry lock file (reproducible env optional for this project)
+poetry.lock
+
+# OS files
+.DS_Store
