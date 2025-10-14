@@ -3,12 +3,15 @@ from __future__ import annotations
 import uuid
 import datetime
 from enum import Enum
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from pydantic import Field
 from pydantic.dataclasses import dataclass as pydantic_dataclass
 
 from ..config.settings import settings
+
+if TYPE_CHECKING:
+    from .project import Project
 
 
 class TaskStatus(str, Enum):
@@ -19,6 +22,7 @@ class TaskStatus(str, Enum):
 
 @pydantic_dataclass
 class Task:
+    project: Project
     id: str = Field(
         default_factory=uuid.uuid4
     )

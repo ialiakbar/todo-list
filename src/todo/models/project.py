@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import uuid
 import datetime
-from typing import Dict, List
+from typing import Dict, List, TYPE_CHECKING
 
 from pydantic.dataclasses import dataclass as pydantic_dataclass
 from pydantic import Field
 
-from .task import Task
 from ..config.settings import settings
+
+if TYPE_CHECKING:
+    from .task import Task
 
 
 @pydantic_dataclass
