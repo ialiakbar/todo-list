@@ -1,0 +1,12 @@
+[project]
+name = "TodoList"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Aliakbar Golestani",email = "golestani.aliakbar.pv@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "python-dotenv (>=1.1.1,<2.0.0)"
+]
