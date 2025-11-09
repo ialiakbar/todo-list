@@ -3,15 +3,22 @@ from __future__ import annotations
 import datetime
 from typing import Optional
 
+from ..db import SessionLocal
 from ..models.task import TaskStatus
+from ..repositories import TaskRepository, ProjectRepository
 from ..services import ToDoListManager
 
 
 class ToDoCLI:
-    def __init__(self):
-        self.manager = ToDoListManager()
+    def __init__(self, db_session: SessionLocal):
+        project_repository = ProjectRepository(db_session)
+        task_repository = TaskRepository(db_session)
+        self.manager = ToDoListManager(
+            task_repository=task_repository,
+            project_repository=project_repository
+        )
         self.running = True
-    
+
     def run(self) -> None:
         print("Welcome to My Awesome ToDo List Application!")
         print("=" * 40)

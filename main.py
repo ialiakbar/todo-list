@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
 from src.todo.cli import ToDoCLI
+from src.todo.db import get_session
 
 
 def main():
-    cli = ToDoCLI()
-    cli.run()
+    with get_session() as db_session:
+        cli = ToDoCLI(db_session)
+        cli.run()
 
 
 if __name__ == "__main__":
