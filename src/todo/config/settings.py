@@ -16,6 +16,10 @@ class AppSettings(BaseSettings):
     MAX_TASK_TITLE_LENGTH: int = 30
     MAX_TASK_DESCRIPTION_LENGTH: int = 150
 
+    # Database configuration
+    DATABASE_URL: str
+    DATABASE_ECHO: bool = False
+
     model_config = SettingsConfigDict(
         env_file=_ENV_PATH,
         env_file_encoding="utf-8",
