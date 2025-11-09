@@ -1,33 +1,47 @@
 from __future__ import annotations
 
 import datetime
-from typing import Dict, List, Optional
+import uuid
+from typing import Optional
 
 from ..config.settings import settings
-from ..models import Project, Task
-from ..models.task import TaskStatus
+from ..models.project_orm import ProjectORM
+from ..models.task_orm import TaskORM, TaskStatus
+from ..repositories.interfaces import IProjectRepository, ITaskRepository
+from ..exceptions.service import ValidationError, BusinessRuleError
+from ..exceptions.repository import NotFoundError
 
 
 class ToDoListManager:
-    def __init__(self) -> None:
-        self.projects: Dict[str, Project] = dict()
-        self.tasks: Dict[str, Task] = dict()
+    def __init__(
+        self,
+        project_repository: IProjectRepository,
+        task_repository: ITaskRepository,
+    ) -> None:
+        """Initialize service with repositories via dependency injection."""
+        self.project_repo = project_repository
+        self.task_repo = task_repository
 
-    def create_project(self, name: str, description: str = "") -> Project:
-        if len(self.projects) >= settings.MAX_NUMBER_OF_PROJECTS:
-            raise ValueError(f"Cannot create more than {settings.MAX_NUMBER_OF_PROJECTS} projects")
+    def create_project(self, name: str, description: str = "") -> ProjectORM:
+        """Create a new project with business rule validation."""
+        # Business rule: check max number of projects
+        project_count = self.project_repo.count()
+        if project_count >= settings.MAX_NUMBER_OF_PROJECTS:
+            raise BusinessRuleError(
+                f"Cannot create more than {settings.MAX_NUMBER_OF_PROJECTS} projects"
+            )
 
-        for project in self.projects.values():
-            if project.name.lower() == name.lower():
-                raise ValueError("A project with this name already exists")
-
-        project = Project(
-            name=name,
-            description=description
-        )
-
-        self.projects[project.id] = project
-        return project
+        # Create project (repository handles duplicate name check)
+        try:
+            project = self.project_repo.create(name, description)
+            return project
+        except NotFoundError:
+            raise
+        except Exception as e:
+            # Convert repository exceptions to service exceptions
+            if "already exists" in str(e).lower():
+                raise BusinessRuleError(str(e)) from e
+            raise
 
     def edit_project(self, project_id: str, name: str, description: str = None) -> Project:
         if project_id not in self.projects:
@@ -113,8 +127,9 @@ class ToDoListManager:
         del task
         return True
 
-    def list_all_projects(self) -> List[Project]:
-        return sorted(self.projects.values(), key=lambda p: p.created_at)
+    def list_all_projects(self) -> list[ProjectORM]:
+        """List all projects."""
+        return self.project_repo.get_all()
 
     def list_project_tasks(self, project_id: str) -> List[Task]:
         if project := self.get_project(project_id):
@@ -122,8 +137,10 @@ class ToDoListManager:
         else:
             raise ValueError("Project not found")
 
-    def get_project(self, project_id: str) -> Optional[Project]:
-        return self.projects.get(project_id)
+    def get_project(self, project_id: str | uuid.UUID) -> Optional[ProjectORM]:
+        """Get a project by ID (accepts string or UUID)."""
+        project_uuid = uuid.UUID(project_id) if isinstance(project_id, str) else project_id
+        return self.project_repo.get_by_id(project_uuid)
 
     def get_task(self, project_id: str, task_id: str) -> Optional[Task]:
         project = self.get_project(project_id)
