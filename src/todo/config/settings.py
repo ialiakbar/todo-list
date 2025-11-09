@@ -20,6 +20,9 @@ class AppSettings(BaseSettings):
     DATABASE_URL: str
     DATABASE_ECHO: bool = False
 
+    # Scheduler configuration
+    AUTOCLOSE_INTERVAL_MINUTES: int = 60
+
     model_config = SettingsConfigDict(
         env_file=_ENV_PATH,
         env_file_encoding="utf-8",
