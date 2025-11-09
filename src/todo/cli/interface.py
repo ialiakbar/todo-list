@@ -44,6 +44,7 @@ class ToDoCLI:
         print("0. Exit")
     
     def _handle_choice(self, choice: str) -> None:
+        print('\033[H\033[J', end='')
         try:
             if choice == "1":
                 self._create_project()
