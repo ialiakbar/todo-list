@@ -11,6 +11,7 @@ from ..factory import create_todo_manager_with_session
 from ..services import ToDoListManager
 from ..exceptions.service import BusinessRuleError, ValidationError
 from ..exceptions.repository import NotFoundError
+from ..commands import autoclose_overdue_tasks
 
 
 class ToDoCLI:
@@ -26,7 +27,7 @@ class ToDoCLI:
 
         while self.running:
             self._display_menu()
-            choice = input("\nEnter your choice (1-9): ").strip()
+            choice = input("\nEnter your choice (0-10): ").strip()
             self._handle_choice(choice)
 
     def _display_menu(self) -> None:
@@ -42,6 +43,7 @@ class ToDoCLI:
         print("7. Delete Task")
         print("8. List All Projects")
         print("9. List Tasks in Project")
+        print("10. Auto-close Overdue Tasks")
         print("0. Exit")
     
     def _handle_choice(self, choice: str) -> None:
@@ -65,6 +67,8 @@ class ToDoCLI:
                 self._list_projects()
             elif choice == "9":
                 self._list_project_tasks()
+            elif choice == "10":
+                self._autoclose_overdue()
             elif choice == "0":
                 self._exit()
             else:
@@ -339,6 +343,18 @@ class ToDoCLI:
                 print("-" * 30)
 
         except (ValueError, NotFoundError) as e:
+            print(f"Error: {e}")
+
+    def _autoclose_overdue(self) -> None:
+        """Auto-close overdue tasks."""
+        print("\n--- Auto-close Overdue Tasks ---")
+        try:
+            count = autoclose_overdue_tasks(self.session)
+            if count > 0:
+                print(f"Success: {count} overdue task(s) automatically closed.")
+            else:
+                print("No overdue tasks found.")
+        except Exception as e:
             print(f"Error: {e}")
 
     def _exit(self) -> None:
