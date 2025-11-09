@@ -22,7 +22,7 @@ class ProjectORM(Base):
     __tablename__ = "projects"
 
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        UUID(as_uuid=False),
         primary_key=True,
         default=uuid.uuid4,
     )
