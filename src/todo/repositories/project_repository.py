@@ -29,7 +29,6 @@ class ProjectRepository(IProjectRepository):
         project = ProjectORM(name=name, description=description)
         self.session.add(project)
         self.session.flush()
-        self.session.commit()
         return project
 
     def get_by_id(self, project_id: uuid.UUID) -> Optional[ProjectORM]:
@@ -58,7 +57,6 @@ class ProjectRepository(IProjectRepository):
                 raise DuplicateError(f"A project with name '{project.name}' already exists")
 
         self.session.flush()
-        self.session.commit()
         return project
 
     def delete(self, project_id: uuid.UUID) -> bool:

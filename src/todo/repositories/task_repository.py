@@ -36,7 +36,6 @@ class TaskRepository(ITaskRepository):
         )
         self.session.add(task)
         self.session.flush()
-        self.session.commit()
         return task
 
     def get_by_id(self, task_id: uuid.UUID) -> Optional[TaskORM]:
@@ -52,7 +51,6 @@ class TaskRepository(ITaskRepository):
     def update(self, task: TaskORM) -> TaskORM:
         """Update an existing task."""
         self.session.flush()
-        self.session.commit()
         return task
 
     def delete(self, task_id: uuid.UUID) -> bool:

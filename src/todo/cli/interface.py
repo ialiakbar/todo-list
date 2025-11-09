@@ -3,20 +3,21 @@ from __future__ import annotations
 import datetime
 from typing import Optional
 
-from ..db import SessionLocal
-from ..models.task import TaskStatus
-from ..repositories import TaskRepository, ProjectRepository
+from sqlalchemy.orm import Session
+
+from ..db import get_session
+from ..models.task_orm import TaskStatus
+from ..factory import create_todo_manager_with_session
 from ..services import ToDoListManager
+from ..exceptions.service import BusinessRuleError, ValidationError
+from ..exceptions.repository import NotFoundError
 
 
 class ToDoCLI:
-    def __init__(self, db_session: SessionLocal):
-        project_repository = ProjectRepository(db_session)
-        task_repository = TaskRepository(db_session)
-        self.manager = ToDoListManager(
-            task_repository=task_repository,
-            project_repository=project_repository
-        )
+    def __init__(self, session: Session):
+        """Initialize CLI with a database session."""
+        self.session = session
+        self.manager = create_todo_manager_with_session(session)
         self.running = True
 
     def run(self) -> None:
@@ -68,7 +69,7 @@ class ToDoCLI:
                 self._exit()
             else:
                 print("Invalid choice. Please try again.")
-        except ValueError as e:
+        except (ValueError, NotFoundError, BusinessRuleError, ValidationError) as e:
             print(f"Error: {e}")
         except KeyboardInterrupt:
             print("\n\nExiting...")
@@ -83,8 +84,13 @@ class ToDoCLI:
             print("Error: Name is required.")
             return
 
-        project = self.manager.create_project(name, description)
-        print(f"Success: Project '{project.name}' created with ID: {project.id}")
+        try:
+            project = self.manager.create_project(name, description)
+            self.session.commit()
+            print(f"Success: Project '{project.name}' created with ID: {project.id}")
+        except Exception as e:
+            self.session.rollback()
+            raise
     
     def _edit_project(self) -> None:
         print("\n--- Edit Project ---")
@@ -108,8 +114,13 @@ class ToDoCLI:
         if not new_description:
             new_description = project.description
 
-        self.manager.edit_project(project_id, new_name, new_description)
-        print(f"Success: Project updated to '{new_name}'")
+        try:
+            self.manager.edit_project(project_id, new_name, new_description)
+            self.session.commit()
+            print(f"Success: Project updated to '{new_name}'")
+        except Exception as e:
+            self.session.rollback()
+            raise
 
     def _delete_project(self) -> None:
         print("\n--- Delete Project ---")
@@ -126,10 +137,15 @@ class ToDoCLI:
 
         confirm = input(f"Are you sure you want to delete project '{project.name}' and all its tasks? (y/N): ").strip().lower()
         if confirm == 'y':
-            if self.manager.delete_project(project_id):
-                print(f"Success: Project '{project.name}' and all its tasks deleted.")
-            else:
-                print("Error: Failed to delete project.")
+            try:
+                if self.manager.delete_project(project_id):
+                    self.session.commit()
+                    print(f"Success: Project '{project.name}' and all its tasks deleted.")
+                else:
+                    print("Error: Failed to delete project.")
+            except Exception as e:
+                self.session.rollback()
+                raise
         else:
             print("Project deletion cancelled.")
 
@@ -162,8 +178,13 @@ class ToDoCLI:
                 print("Error: Invalid date format. Use YYYY-MM-DD")
                 return
         
-        task = self.manager.add_task_to_project(project_id, title, description, deadline)
-        print(f"Success: Task '{task.title}' added to project '{project.name}' with ID: {task.id}")
+        try:
+            task = self.manager.add_task_to_project(project_id, title, description, deadline)
+            self.session.commit()
+            print(f"Success: Task '{task.title}' added to project '{project.name}' with ID: {task.id}")
+        except Exception as e:
+            self.session.rollback()
+            raise
 
     def _change_task_status(self) -> None:
         print("\n--- Change Task Status ---")
@@ -184,8 +205,13 @@ class ToDoCLI:
             print("Error: Invalid status choice.")
             return
         
-        task = self.manager.change_task_status(task_id, status_map[status_choice])
-        print(f"Success: Task '{task.title}' status changed to {task.status}")
+        try:
+            task = self.manager.change_task_status(task_id, status_map[status_choice])
+            self.session.commit()
+            print(f"Success: Task '{task.title}' status changed to {task.status}")
+        except Exception as e:
+            self.session.rollback()
+            raise
     
     def _edit_task(self) -> None:
         print("\n--- Edit Task ---")
@@ -195,7 +221,7 @@ class ToDoCLI:
             print("Error: Task ID is required.")
             return
 
-        task = self.manager.tasks.get(task_id)
+        task = self.manager.get_task(None, task_id)
         if task is None:
             print("Error: Task not found.")
             return
@@ -225,14 +251,19 @@ class ToDoCLI:
         if status_choice in list(status_map.keys()):
             new_status = status_map[status_choice]
 
-        self.manager.edit_task(
-            task_id,
-            new_title if new_title else None,
-            new_description if new_description else None,
-            new_deadline,
-            new_status
-        )
-        print(f"Success: Task updated")
+        try:
+            self.manager.edit_task(
+                task_id,
+                new_title if new_title else None,
+                new_description if new_description else None,
+                new_deadline,
+                new_status
+            )
+            self.session.commit()
+            print(f"Success: Task updated")
+        except Exception as e:
+            self.session.rollback()
+            raise
 
     def _delete_task(self) -> None:
         print("\n--- Delete Task ---")
@@ -242,17 +273,22 @@ class ToDoCLI:
             print("Error: Task ID is required.")
             return
 
-        task = self.manager.tasks.get(task_id)
+        task = self.manager.get_task(None, task_id)
         if task is None:
             print("Error: Task not found.")
             return
 
         confirm = input(f"Are you sure you want to delete task '{task.title}'? (y/N): ").strip().lower()
         if confirm == 'y':
-            if self.manager.delete_task(task_id):
-                print(f"Success: Task '{task.title}' deleted.")
-            else:
-                print("Error: Failed to delete task.")
+            try:
+                if self.manager.delete_task(task_id):
+                    self.session.commit()
+                    print(f"Success: Task '{task.title}' deleted.")
+                else:
+                    print("Error: Failed to delete task.")
+            except Exception as e:
+                self.session.rollback()
+                raise
         else:
             print("Task deletion cancelled.")
 
@@ -269,7 +305,8 @@ class ToDoCLI:
             print(f"Name: {project.name}")
             print(f"Description: {project.description}")
             print(f"Created: {project.created_at.strftime('%Y-%m-%d %H:%M:%S')}")
-            print(f"Tasks: {len(project.tasks)}")
+            task_count = len(self.manager.list_project_tasks(project.id))
+            print(f"Tasks: {task_count}")
             print("-" * 30)
 
     def _list_project_tasks(self) -> None:
@@ -301,7 +338,7 @@ class ToDoCLI:
                 print(f"Created: {task.created_at.strftime('%Y-%m-%d %H:%M:%S')}")
                 print("-" * 30)
 
-        except ValueError as e:
+        except (ValueError, NotFoundError) as e:
             print(f"Error: {e}")
 
     def _exit(self) -> None:
