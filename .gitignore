@@ -17,6 +17,3 @@ poetry.lock
 
 # IDE
 .idea
-
-# Infra
-infra/
