@@ -15,13 +15,26 @@ from ..commands import autoclose_overdue_tasks
 
 
 class ToDoCLI:
+    """CLI interface for ToDoList application.
+    
+    DEPRECATED: This CLI interface is deprecated. Please use the Web API instead.
+    The CLI may be removed in a future version.
+    """
+    
     def __init__(self, session: Session):
-        """Initialize CLI with a database session."""
+        """Initialize CLI with a database session.
+        
+        DEPRECATED: Use the Web API instead.
+        """
         self.session = session
         self.manager = create_todo_manager_with_session(session)
         self.running = True
 
     def run(self) -> None:
+        """Run the CLI interface.
+        
+        DEPRECATED: Use the Web API instead.
+        """
         print("Welcome to My Awesome ToDo List Application!")
         print("=" * 40)
 
@@ -33,6 +46,11 @@ class ToDoCLI:
     def _display_menu(self) -> None:
         print("\n" + "=" * 40)
         print("ToDo List Menu")
+        print("=" * 40)
+        print("⚠️  DEPRECATED: This CLI is deprecated.")
+        print("   Please use the Web API instead:")
+        print("   - Start API: poetry run python api_main.py")
+        print("   - API Docs: http://localhost:8000/docs")
         print("=" * 40)
         print("1. Create Project")
         print("2. Edit Project")

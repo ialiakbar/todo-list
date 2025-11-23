@@ -1,6 +1,8 @@
 # ToDo List Application
 
-A command-line ToDo List application built with Python, featuring project and task management with PostgreSQL database persistence.
+A RESTful Web API for ToDo List management built with Python, FastAPI, and PostgreSQL. Features project and task management with automatic validation, business rules, and database persistence.
+
+> **Note**: The CLI interface is **deprecated**. Please use the Web API instead. The CLI may be removed in a future version.
 
 ## Features
 
@@ -55,19 +57,80 @@ A command-line ToDo List application built with Python, featuring project and ta
    DATABASE_ECHO=false
    ```
 
-6. **Run the application**:
+6. **Run the Web API server**:
    ```bash
-   poetry run python main.py
+   poetry run python api_main.py
    ```
    
-   Or using the entry point:
-   ```bash
-   poetry run todo
-   ```
+   The API will be available at:
+   - API Base: http://localhost:8000/api/v1
+   - Interactive API Docs (Swagger): http://localhost:8000/docs
+   - Alternative API Docs (ReDoc): http://localhost:8000/redoc
+
+   **Note**: The CLI interface (`poetry run python main.py` or `poetry run todo`) is deprecated and will show a deprecation warning.
 
 ## Usage
 
-The application provides a menu-driven interface with the following options:
+### Web API (Primary Interface)
+
+The application provides a RESTful Web API with the following endpoints:
+
+#### Projects
+
+- `GET /api/v1/projects` - List all projects
+- `POST /api/v1/projects` - Create a new project
+- `GET /api/v1/projects/{project_id}` - Get a project by ID
+- `PUT /api/v1/projects/{project_id}` - Update a project
+- `DELETE /api/v1/projects/{project_id}` - Delete a project
+
+#### Tasks
+
+- `GET /api/v1/projects/{project_id}/tasks` - List all tasks in a project
+- `POST /api/v1/projects/{project_id}/tasks` - Create a new task in a project
+- `GET /api/v1/tasks/{task_id}` - Get a task by ID
+- `PUT /api/v1/tasks/{task_id}` - Update a task (partial update supported)
+- `PATCH /api/v1/tasks/{task_id}/status` - Change task status
+- `DELETE /api/v1/tasks/{task_id}` - Delete a task
+
+#### Health Check
+
+- `GET /api/v1/health` - Check API health status
+
+### API Examples
+
+#### Create a Project
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/projects" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "My Project", "description": "Project description"}'
+```
+
+#### Create a Task
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/projects/{project_id}/tasks" \
+  -H "Content-Type: application/json" \
+  -d '{"title": "My Task", "description": "Task description", "deadline": "2025-12-31T23:59:59Z"}'
+```
+
+#### List All Projects
+
+```bash
+curl "http://localhost:8000/api/v1/projects"
+```
+
+### Interactive API Documentation
+
+Once the API server is running, visit:
+- **Swagger UI**: http://localhost:8000/docs - Interactive API documentation with "Try it out" functionality
+- **ReDoc**: http://localhost:8000/redoc - Alternative API documentation interface
+
+### CLI Interface (Deprecated)
+
+> ⚠️ **The CLI interface is deprecated**. Please use the Web API instead.
+
+The CLI provides a menu-driven interface with the following options:
 
 1. **Create Project** - Create a new project with name and description
 2. **Edit Project** - Modify an existing project's details
@@ -78,8 +141,15 @@ The application provides a menu-driven interface with the following options:
 7. **Delete Task** - Remove a specific task
 8. **List All Projects** - Display all projects with their details
 9. **List Tasks in Project** - Show all tasks within a specific project
-10. **Auto-close Overdue Tasks** - Automatically mark overdue tasks as done
+10. **Auto-close Overdue Tasks** - Automatically mark overdue tasks as done (handled by scheduler)
 0. **Exit** - Quit the application
+
+To run the CLI (deprecated):
+```bash
+poetry run python main.py
+# or
+poetry run todo
+```
 
 ## Configuration
 
@@ -98,10 +168,11 @@ The application uses environment variables for configuration:
 
 The application follows a layered architecture with separation of concerns:
 
+- **API Layer** (`src/todo/api/`): FastAPI controllers, Pydantic schemas, and routers
 - **Models** (`src/todo/models/`): SQLAlchemy ORM models for Task and Project entities
 - **Repositories** (`src/todo/repositories/`): Data access layer with repository pattern
 - **Services** (`src/todo/services/`): Business logic layer (ToDoListManager)
-- **CLI** (`src/todo/cli/`): User interface layer
+- **CLI** (`src/todo/cli/`): Command-line interface (deprecated)
 - **Commands** (`src/todo/commands/`): Standalone commands (e.g., auto-close overdue tasks)
 - **Config** (`src/todo/config/`): Environment configuration management
 - **Database** (`src/todo/db/`): Database session and connection management
@@ -112,18 +183,24 @@ The application follows a layered architecture with separation of concerns:
 ```
 todo/
 ├── src/todo/
+│   ├── api/             # FastAPI Web API layer
+│   │   ├── controllers/ # Route handlers
+│   │   ├── controller_schemas/ # Pydantic models
+│   │   ├── app.py       # FastAPI application
+│   │   └── routers.py   # API router configuration
 │   ├── models/          # ORM models (ProjectORM, TaskORM)
 │   ├── repositories/    # Data access layer
 │   ├── services/        # Business logic
-│   ├── cli/             # Command-line interface
+│   ├── cli/             # Command-line interface (deprecated)
 │   ├── commands/        # Standalone commands
 │   ├── db/              # Database configuration
 │   ├── exceptions/      # Exception hierarchy
 │   ├── config/          # Configuration management
 │   └── factory.py       # Dependency injection factory
 ├── alembic/             # Database migrations
-├── main.py              # Application entry point
-├── docker-compose.yml   # PostgreSQL Docker setup
+├── api_main.py          # API server entry point
+├── main.py              # CLI entry point (deprecated)
+├── infra/               # Infrastructure (Docker Compose)
 ├── pyproject.toml       # Poetry configuration
 ├── .env.example         # Environment variables template
 └── README.md            # This file
