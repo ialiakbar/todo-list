@@ -24,14 +24,16 @@ SessionLocal = sessionmaker(
 )
 
 
-@contextmanager
 def get_session() -> Generator[Session, None, None]:
-    """Provides a database session. Can be used with 'with' statement."""
+    """Provides a database session generator."""
     session = SessionLocal()
     try:
         yield session
     finally:
         session.close()
+
+
+get_session_ctx = contextmanager(get_session)
 
 
 def init_db() -> None:

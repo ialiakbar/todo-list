@@ -5,7 +5,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from ..db import get_session
+from ..db import get_session_ctx
 from ..models.task_orm import TaskStatus
 from ..factory import create_todo_manager_with_session
 from ..services import ToDoListManager

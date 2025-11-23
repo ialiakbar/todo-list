@@ -8,7 +8,7 @@ from typing import Optional
 
 import schedule
 
-from ..db import get_session
+from ..db import get_session_ctx
 from ..config.settings import settings
 from .autoclose_overdue import autoclose_overdue_tasks
 
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 def run_autoclose_job() -> None:
     """Job function to run auto-close overdue tasks."""
     try:
-        with get_session() as session:
+        with get_session_ctx() as session:
             count = autoclose_overdue_tasks(session)
             if count > 0:
                 logger.info(f"Auto-closed {count} overdue task(s)")

@@ -10,7 +10,7 @@ Then access the API at http://localhost:8000/docs
 import warnings
 
 from src.todo.cli import ToDoCLI
-from src.todo.db import get_session
+from src.todo.db import get_session_ctx
 
 
 def main():
@@ -26,7 +26,7 @@ def main():
     print("   Start the API server: poetry run python api_main.py")
     print("   API documentation: http://localhost:8000/docs\n")
     
-    with get_session() as db_session:
+    with get_session_ctx() as db_session:
         cli = ToDoCLI(db_session)
         cli.run()
 

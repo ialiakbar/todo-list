@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from .db.session import get_session
+from .db.session import get_session_ctx
 from .repositories import ProjectRepository, TaskRepository
 from .repositories.interfaces import IProjectRepository, ITaskRepository
 from .services.todo_manager import ToDoListManager
