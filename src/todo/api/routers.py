@@ -2,11 +2,12 @@
 
 from fastapi import APIRouter
 
-from .controllers import health_controller
+from .controllers import health_controller, projects_controller
 
 # Create main API router
 api_router = APIRouter()
 
 # Register route handlers
 api_router.include_router(health_controller.router, tags=["health"])
+api_router.include_router(projects_controller.router, tags=["projects"])
 
